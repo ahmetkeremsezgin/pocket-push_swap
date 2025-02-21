@@ -242,6 +242,61 @@ static int	init_stacks(t_stack *a, t_stack *b)
 	return (1);
 }
 
+static int	normalize_stack(t_stack *stack)
+{
+	t_node	*i;
+	t_node	*j;
+	int		normalized;
+
+	i = stack->top;
+	while (i)
+	{
+		normalized = 0;
+		j = stack->top;
+		while (j)
+		{
+			if (i->value > j->value)
+				normalized++;
+			j = j->next;
+		}
+		i->value = normalized;
+		i = i->next;
+	}
+	return (1);
+}
+
+static int	check_duplicates(t_stack *stack)
+{
+	t_node	*i;
+	t_node	*j;
+
+	i = stack->top;
+	while (i)
+	{
+		j = i->next;
+		while (j)
+		{
+			if (i->value == j->value)
+				return (0);
+			j = j->next;
+		}
+		i = i->next;
+	}
+	return (1);
+}
+
+static void	error_exit(t_stack *a, t_stack *b, char **numbers)
+{
+	if (numbers)
+		free_split(numbers);
+	if (a)
+		free_stack(a);
+	if (b)
+		free_stack(b);
+	write(2, "Error\n", 6);
+	exit(1);
+}
+
 int	main(int argc, char **argv)
 {
 	t_stack	a;
@@ -249,19 +304,21 @@ int	main(int argc, char **argv)
 	char	**numbers;
 
 	if (argc != 2)
-		return (0);
+		return (write(2, "Error\n", 6));
 	if (!init_stacks(&a, &b))
-		return (1);
+		error_exit(&a, &b, NULL);
 	numbers = ft_split(argv[1]);
 	if (!numbers)
-		return (1);
+		error_exit(&a, &b, NULL);
 	if (!fill_stack(&a, numbers))
-	{
-		free_split(numbers);
-		return (1);
-	}
+		error_exit(&a, &b, numbers);
 	free_split(numbers);
-	radix_sort(&a, &b);
+	if (!check_duplicates(&a))
+		error_exit(&a, &b, NULL);
+	if (!normalize_stack(&a))
+		error_exit(&a, &b, NULL);
+	if (!is_sorted(&a))
+		radix_sort(&a, &b);
 	free_stack(&a);
 	free_stack(&b);
 	return (0);

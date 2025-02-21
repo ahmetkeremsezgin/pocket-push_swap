@@ -39,4 +39,20 @@ void	radix_sort(t_stack *a, t_stack *b)
 			pa(a, b);
 		i++;
 	}
+}
+
+int	is_sorted(t_stack *stack)
+{
+	t_node	*current;
+
+	if (!stack || !stack->top)
+		return (1);
+	current = stack->top;
+	while (current->next)
+	{
+		if (current->value > current->next->value)
+			return (0);
+		current = current->next;
+	}
+	return (1);
 } 

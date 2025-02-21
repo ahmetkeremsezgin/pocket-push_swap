@@ -52,4 +52,10 @@ void	radix_sort(t_stack *a, t_stack *b);
 /* utils.c */
 char	**ft_split(char *str);
 
+/* Yeni fonksiyon prototipleri ekleyelim */
+int		is_sorted(t_stack *stack);
+int		check_duplicates(t_stack *stack);
+int		normalize_stack(t_stack *stack);
+void	error_exit(t_stack *a, t_stack *b, char **numbers);
+
 #endif
