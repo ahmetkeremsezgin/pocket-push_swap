@@ -29,6 +29,12 @@ typedef struct s_stack
 	int		size;
 }	t_stack;
 
+/* push_swap.c */
+void	free_stack(t_stack *stack);
+void	free_split(char **split);
+int		fill_stack(t_stack *a, char **numbers);
+int		init_stacks(t_stack *a, t_stack *b);
+
 /* stack_operations.c */
 void	sa(t_stack *a);
 void	pb(t_stack *a, t_stack *b);

@@ -1,6 +1,19 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   push_swap.c                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: your_username <your_email>                 +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/01/01 00:00:00 by your_username     #+#    #+#             */
+/*   Updated: 2024/01/01 00:00:00 by your_username    ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <limits.h> // INT_MIN için gerekli
+#include "push_swap.h"
 
 typedef struct s_node
 {
@@ -101,7 +114,6 @@ void radix_sort(t_stack *a, t_stack *b)
             else
                 pb(a, b);
         }
-        // b'deki tüm elemanları a'ya geri push
         while (b->size > 0)
             pa(a, b);
     }
@@ -182,53 +194,75 @@ char **ft_split(char *str)
     return words;
 }
 
-// Ana fonksiyonu güncelleyelim
-int main(int argc, char **argv)
+static void	free_stack(t_stack *stack)
 {
-    t_stack a;
-    t_stack b;
-    char **numbers;
-    int i = 0;
+	t_node	*temp;
 
-    stack_init(&a);
-    stack_init(&b);
+	while (stack->top)
+	{
+		temp = stack->top;
+		stack->top = stack->top->next;
+		free(temp);
+	}
+}
 
-    if (argc != 2)
-        return (0);
+static void	free_split(char **split)
+{
+	int	i;
 
-    numbers = ft_split(argv[1]);
-    if (!numbers)
-        return (1);
+	i = 0;
+	while (split[i])
+	{
+		free(split[i]);
+		i++;
+	}
+	free(split);
+}
 
-    // Sayıları say
-    while (numbers[i])
-        i++;
+static int	fill_stack(t_stack *a, char **numbers)
+{
+	int	i;
+	int	num;
 
-    // Stack'e ekle (sondan başa doğru)
-    while (--i >= 0)
-    {
-        int num = atoi(numbers[i]);
-        push(&a, num);
-        free(numbers[i]);
-    }
-    free(numbers);
+	i = 0;
+	while (numbers[i])
+		i++;
+	while (--i >= 0)
+	{
+		num = atoi(numbers[i]);
+		push(a, num);
+	}
+	return (1);
+}
 
-    // Sıralama yap
-    radix_sort(&a, &b);
+static int	init_stacks(t_stack *a, t_stack *b)
+{
+	stack_init(a);
+	stack_init(b);
+	return (1);
+}
 
-    // Belleği temizle
-    while (a.top)
-    {
-        t_node *temp = a.top;
-        a.top = a.top->next;
-        free(temp);
-    }
-    while (b.top)
-    {
-        t_node *temp = b.top;
-        b.top = b.top->next;
-        free(temp);
-    }
+int	main(int argc, char **argv)
+{
+	t_stack	a;
+	t_stack	b;
+	char	**numbers;
 
-    return (0);
+	if (argc != 2)
+		return (0);
+	if (!init_stacks(&a, &b))
+		return (1);
+	numbers = ft_split(argv[1]);
+	if (!numbers)
+		return (1);
+	if (!fill_stack(&a, numbers))
+	{
+		free_split(numbers);
+		return (1);
+	}
+	free_split(numbers);
+	radix_sort(&a, &b);
+	free_stack(&a);
+	free_stack(&b);
+	return (0);
 }

@@ -13,6 +13,7 @@
 NAME		= push_swap
 CC			= cc
 CFLAGS		= -Wall -Wextra -Werror
+RM			= rm -f
 
 SRCS		= push_swap.c \
 			stack_operations.c \
@@ -22,16 +23,19 @@ SRCS		= push_swap.c \
 
 OBJS		= $(SRCS:.c=.o)
 
-all:		$(NAME)
+%.o:		%.c
+			$(CC) $(CFLAGS) -c $< -o $@
 
 $(NAME):	$(OBJS)
 			$(CC) $(CFLAGS) $(OBJS) -o $(NAME)
 
+all:		$(NAME)
+
 clean:
-			rm -f $(OBJS)
+			$(RM) $(OBJS)
 
 fclean:		clean
-			rm -f $(NAME)
+			$(RM) $(NAME)
 
 re:			fclean all
 
