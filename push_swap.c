@@ -1,325 +1,197 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   push_swap.c                                        :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: your_username <your_email>                 +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/01/01 00:00:00 by your_username     #+#    #+#             */
-/*   Updated: 2024/01/01 00:00:00 by your_username    ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
-#include <stdlib.h>
-#include <unistd.h>
-#include <limits.h> // INT_MIN için gerekli
 #include "push_swap.h"
 
-typedef struct s_node
-{
-    int             value;
-    struct s_node   *next;
-} t_node;
-
-typedef struct s_stack
-{
-    t_node  *top;
-    int     size;
-} t_stack;
-
-// Fonksiyon prototiplerini başa ekleyelim
-void    sa(t_stack *a);
-void    pb(t_stack *a, t_stack *b);
-void    pa(t_stack *a, t_stack *b);
-void    ra(t_stack *a);
-void    stack_init(t_stack *stack);
-void    push(t_stack *stack, int value);
-int     get_max_bits(t_stack *stack);
-void    radix_sort(t_stack *a, t_stack *b);
-char **ft_split(char *str);
-
-// Stack işlemleri için yardımcı fonksiyonlar
-void    stack_init(t_stack *stack)
-{
-    stack->top = NULL;
-    stack->size = 0;
-}
-
-void    push(t_stack *stack, int value)
-{
-    t_node *new_node = malloc(sizeof(t_node));
-    if (!new_node)
-        return;
-    new_node->value = value;
-    new_node->next = stack->top;
-    stack->top = new_node;
-    stack->size++;
-}
-
-// Stack operasyonları
-void    sa(t_stack *a)
-{
-    if (a->size < 2)
-        return;
-    int temp = a->top->value;
-    a->top->value = a->top->next->value;
-    a->top->next->value = temp;
-    write(1, "sa\n", 3);
-}
-
-void    pb(t_stack *a, t_stack *b)
-{
-    if (a->size == 0)
-        return;
-    t_node *temp = a->top;
-    a->top = a->top->next;
-    temp->next = b->top;
-    b->top = temp;
-    a->size--;
-    b->size++;
-    write(1, "pb\n", 3);
-}
-
-// Yardımcı fonksiyonlar
+// En büyük sayının kaç bit kullandığını bulur
 int get_max_bits(t_stack *stack)
 {
-    int max = INT_MIN;
-    t_node *current = stack->top;
+    int max = stack->numbers[0];
+    int bits = 0;
     
-    while (current)
+    for (int i = 1; i < stack->size; i++)
+        if (stack->numbers[i] > max)
+            max = stack->numbers[i];
+            
+    while (max > 0)
     {
-        if (current->value > max)
-            max = current->value;
-        current = current->next;
+        bits++;
+        max >>= 1;
     }
-    
-    int max_bits = 0;
-    while ((max >> max_bits) != 0)
-        max_bits++;
-    return max_bits;
+    return bits;
 }
 
-void radix_sort(t_stack *a, t_stack *b)
+void radix_sort(t_stack *stack_a, t_stack *stack_b)
 {
-    int max_bits = get_max_bits(a);
+    int max_bits = get_max_bits(stack_a);
     
+    // Her bit için
     for (int i = 0; i < max_bits; i++)
     {
-        int items = a->size;
-        for (int j = 0; j < items; j++)
+        int size = stack_a->size;
+        
+        // Stack a'daki her sayı için
+        for (int j = 0; j < size; j++)
         {
-            int num = a->top->value;
-            if ((num >> i) & 1)
-                ra(a);
+            // Eğer i. bit 0 ise b'ye pushla
+            if ((stack_a->numbers[0] >> i) & 1)
+                ra(stack_a);
             else
-                pb(a, b);
+                pb(stack_a, stack_b);
         }
-        while (b->size > 0)
-            pa(a, b);
+        
+        // b'deki tüm sayıları geri a'ya pushla
+        while (stack_b->size > 0)
+            pa(stack_a, stack_b);
     }
 }
 
-// Stack operasyonları (eksik olanları ekleyelim)
-void ra(t_stack *a)
-{
-    if (a->size < 2)
-        return;
-    t_node *first = a->top;
-    t_node *last = a->top;
-    
-    while (last->next)
-        last = last->next;
-    
-    a->top = first->next;
-    first->next = NULL;
-    last->next = first;
-    
-    write(1, "ra\n", 3);
-}
-
-void pa(t_stack *a, t_stack *b)
-{
-    if (b->size == 0)
-        return;
-    t_node *temp = b->top;
-    b->top = b->top->next;
-    temp->next = a->top;
-    a->top = temp;
-    b->size--;
-    a->size++;
-    write(1, "pa\n", 3);
-}
-
-// String split fonksiyonu ekleyelim
-char **ft_split(char *str)
+// Sayıyı kontrol et
+int is_number(char *str)
 {
     int i = 0;
-    int j = 0;
-    int word_count = 1;
-    char **words;
+    
+    if (str[0] == '-')
+        i++;
+    while (str[i])
+    {
+        if (str[i] < '0' || str[i] > '9')
+            return (0);
+        i++;
+    }
+    return (1);
+}
 
-    // Kelime sayısını hesapla
+// Stack'i başlat
+t_stack *init_stack(int size)
+{
+    t_stack *stack = malloc(sizeof(t_stack));
+    if (!stack)
+        return (NULL);
+        
+    stack->numbers = malloc(sizeof(int) * size);
+    if (!stack->numbers)
+    {
+        free(stack);
+        return (NULL);
+    }
+    
+    stack->size = 0;
+    return (stack);
+}
+
+// Stack'i temizle
+void free_stack(t_stack *stack)
+{
+    if (stack)
+    {
+        if (stack->numbers)
+            free(stack->numbers);
+        free(stack);
+    }
+}
+
+// String'i bölen ve sayılara çeviren fonksiyon
+char **split_numbers(char *str, int *count)
+{
+    char **numbers;
+    char *start;
+    int i = 0;
+    int num_count = 1;
+    
+    // Boşluk sayısını say
     while (str[i])
     {
         if (str[i] == ' ')
-            word_count++;
+            num_count++;
         i++;
     }
-
-    words = malloc(sizeof(char *) * (word_count + 1));
-    if (!words)
+    
+    numbers = malloc(sizeof(char *) * (num_count + 1));
+    if (!numbers)
         return NULL;
-
+    
     i = 0;
+    start = str;
+    num_count = 0;
     while (*str)
     {
-        if (*str != ' ')
+        if (*str == ' ')
         {
-            j = 0;
-            while (str[j] && str[j] != ' ')
-                j++;
-            words[i] = malloc(j + 1);
-            if (!words[i])
-                return NULL;
-            j = 0;
-            while (*str && *str != ' ')
-                words[i][j++] = *str++;
-            words[i][j] = '\0';
-            i++;
+            *str = '\0';
+            if (start != str)
+                numbers[num_count++] = start;
+            start = str + 1;
         }
-        else
-            str++;
+        str++;
     }
-    words[i] = NULL;
-    return words;
+    if (start != str)
+        numbers[num_count++] = start;
+    numbers[num_count] = NULL;
+    *count = num_count;
+    
+    return numbers;
 }
 
-static void	free_stack(t_stack *stack)
+int main(int argc, char **argv)
 {
-	t_node	*temp;
-
-	while (stack->top)
-	{
-		temp = stack->top;
-		stack->top = stack->top->next;
-		free(temp);
-	}
-}
-
-static void	free_split(char **split)
-{
-	int	i;
-
-	i = 0;
-	while (split[i])
-	{
-		free(split[i]);
-		i++;
-	}
-	free(split);
-}
-
-static int	fill_stack(t_stack *a, char **numbers)
-{
-	int	i;
-	int	num;
-
-	i = 0;
-	while (numbers[i])
-		i++;
-	while (--i >= 0)
-	{
-		num = atoi(numbers[i]);
-		push(a, num);
-	}
-	return (1);
-}
-
-static int	init_stacks(t_stack *a, t_stack *b)
-{
-	stack_init(a);
-	stack_init(b);
-	return (1);
-}
-
-static int	normalize_stack(t_stack *stack)
-{
-	t_node	*i;
-	t_node	*j;
-	int		normalized;
-
-	i = stack->top;
-	while (i)
-	{
-		normalized = 0;
-		j = stack->top;
-		while (j)
-		{
-			if (i->value > j->value)
-				normalized++;
-			j = j->next;
-		}
-		i->value = normalized;
-		i = i->next;
-	}
-	return (1);
-}
-
-static int	check_duplicates(t_stack *stack)
-{
-	t_node	*i;
-	t_node	*j;
-
-	i = stack->top;
-	while (i)
-	{
-		j = i->next;
-		while (j)
-		{
-			if (i->value == j->value)
-				return (0);
-			j = j->next;
-		}
-		i = i->next;
-	}
-	return (1);
-}
-
-static void	error_exit(t_stack *a, t_stack *b, char **numbers)
-{
-	if (numbers)
-		free_split(numbers);
-	if (a)
-		free_stack(a);
-	if (b)
-		free_stack(b);
-	write(2, "Error\n", 6);
-	exit(1);
-}
-
-int	main(int argc, char **argv)
-{
-	t_stack	a;
-	t_stack	b;
-	char	**numbers;
-
-	if (argc != 2)
-		return (write(2, "Error\n", 6));
-	if (!init_stacks(&a, &b))
-		error_exit(&a, &b, NULL);
-	numbers = ft_split(argv[1]);
-	if (!numbers)
-		error_exit(&a, &b, NULL);
-	if (!fill_stack(&a, numbers))
-		error_exit(&a, &b, numbers);
-	free_split(numbers);
-	if (!check_duplicates(&a))
-		error_exit(&a, &b, NULL);
-	if (!normalize_stack(&a))
-		error_exit(&a, &b, NULL);
-	if (!is_sorted(&a))
-		radix_sort(&a, &b);
-	free_stack(&a);
-	free_stack(&b);
-	return (0);
-}
+    t_stack *stack_a;
+    t_stack *stack_b;
+    char **numbers;
+    int count;
+    int i;
+    
+    if (argc < 2)
+        return (0);
+        
+    if (argc == 2)
+    {
+        numbers = split_numbers(argv[1], &count);
+        if (!numbers)
+        {
+            write(2, "Error\n", 6);
+            return (1);
+        }
+    }
+    else
+    {
+        numbers = argv + 1;
+        count = argc - 1;
+    }
+    
+    // Stack'leri başlat
+    stack_a = init_stack(count);
+    stack_b = init_stack(count);
+    if (!stack_a || !stack_b)
+    {
+        if (argc == 2)
+            free(numbers);
+        write(2, "Error\n", 6);
+        return (1);
+    }
+    
+    // Sayıları stack_a'ya ekle
+    for (i = 0; i < count; i++)
+    {
+        if (!is_number(numbers[i]))
+        {
+            if (argc == 2)
+                free(numbers);
+            write(2, "Error\n", 6);
+            free_stack(stack_a);
+            free_stack(stack_b);
+            return (1);
+        }
+        stack_a->numbers[stack_a->size] = atoi(numbers[i]);
+        stack_a->size++;
+    }
+    
+    if (argc == 2)
+        free(numbers);
+    
+    // Sıralama yap
+    radix_sort(stack_a, stack_b);
+    
+    // Belleği temizle
+    free_stack(stack_a);
+    free_stack(stack_b);
+    
+    return (0);
+} 

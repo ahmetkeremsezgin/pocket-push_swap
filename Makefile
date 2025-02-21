@@ -1,42 +1,29 @@
-# **************************************************************************** #
-#                                                                              #
-#                                                         :::      ::::::::    #
-#    Makefile                                           :+:      :+:    :+:    #
-#                                                     +:+ +:+         +:+      #
-#    By: your_username <your_email>                 +#+  +:+       +#+         #
-#                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2024/01/01 00:00:00 by your_username     #+#    #+#            #
-#    Updated: 2024/01/01 00:00:00 by your_username    ###   ########.fr      #
-#                                                                              #
-# **************************************************************************** #
+NAME = push_swap
 
-NAME		= push_swap
-CC			= cc
-CFLAGS		= -Wall -Wextra -Werror
-RM			= rm -f
+CC = cc
+CFLAGS = -Wall -Wextra -Werror
 
-SRCS		= push_swap.c \
-			stack_operations.c \
-			stack_utils.c \
-			sort.c \
-			utils.c
+SRCS = push_swap.c \
+       operations.c
 
-OBJS		= $(SRCS:.c=.o)
+OBJS = $(SRCS:.c=.o)
 
-%.o:		%.c
-			$(CC) $(CFLAGS) -c $< -o $@
+HEADERS = push_swap.h
 
-$(NAME):	$(OBJS)
-			$(CC) $(CFLAGS) $(OBJS) -o $(NAME)
+all: $(NAME)
 
-all:		$(NAME)
+$(NAME): $(OBJS)
+	$(CC) $(CFLAGS) $(OBJS) -o $(NAME)
+
+%.o: %.c $(HEADERS)
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-			$(RM) $(OBJS)
+	rm -f $(OBJS)
 
-fclean:		clean
-			$(RM) $(NAME)
+fclean: clean
+	rm -f $(NAME)
 
-re:			fclean all
+re: fclean all
 
-.PHONY:		all clean fclean re
+.PHONY: all clean fclean re
